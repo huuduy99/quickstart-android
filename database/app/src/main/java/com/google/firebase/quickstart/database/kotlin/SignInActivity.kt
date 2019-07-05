@@ -12,15 +12,16 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.quickstart.database.R
 import com.google.firebase.quickstart.database.kotlin.models.User
-import kotlinx.android.synthetic.main.activity_sign_in.buttonSignIn
-import kotlinx.android.synthetic.main.activity_sign_in.buttonSignUp
-import kotlinx.android.synthetic.main.activity_sign_in.fieldEmail
-import kotlinx.android.synthetic.main.activity_sign_in.fieldPassword
+import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : BaseActivity(), View.OnClickListener {
 
     private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
+
+    companion object {
+        private const val TAG = "SignInActivity"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,9 +39,10 @@ class SignInActivity : BaseActivity(), View.OnClickListener {
         super.onStart()
 
         // Check auth on Activity start
-        auth.currentUser?.let {
-            onAuthSuccess(it)
-        }
+        //        auth.currentUser?.let {
+        //            onSignUpSuccess(it)
+        //        }
+
     }
 
     private fun signIn() {
@@ -53,18 +55,17 @@ class SignInActivity : BaseActivity(), View.OnClickListener {
         val email = fieldEmail.text.toString()
         val password = fieldPassword.text.toString()
 
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this) { task ->
-                    Log.d(TAG, "signIn:onComplete:" + task.isSuccessful)
-                    hideProgressDialog()
+        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this) { task ->
+            Log.d(TAG, "signIn:onComplete:" + task.isSuccessful)
+            hideProgressDialog()
 
-                    if (task.isSuccessful) {
-                        onAuthSuccess(task.result?.user!!)
-                    } else {
-                        Toast.makeText(baseContext, "Sign In Failed",
-                                Toast.LENGTH_SHORT).show()
-                    }
-                }
+            if (task.isSuccessful) {
+                goToMainActivity()
+            } else {
+                Toast.makeText(baseContext, "Sign In Failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }
 
     private fun signUp() {
@@ -77,27 +78,29 @@ class SignInActivity : BaseActivity(), View.OnClickListener {
         val email = fieldEmail.text.toString()
         val password = fieldPassword.text.toString()
 
-        auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this) { task ->
-                    Log.d(TAG, "createUser:onComplete:" + task.isSuccessful)
-                    hideProgressDialog()
+        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this) { task ->
+            Log.d(TAG, "createUser:onComplete:" + task.isSuccessful)
+            hideProgressDialog()
 
-                    if (task.isSuccessful) {
-                        onAuthSuccess(task.result?.user!!)
-                    } else {
-                        Toast.makeText(baseContext, "Sign Up Failed",
-                                Toast.LENGTH_SHORT).show()
-                    }
-                }
+            if (task.isSuccessful) {
+                onSignUpSuccess(task.result?.user!!)
+            } else {
+                Toast.makeText(baseContext, "Sign Up Failed", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    private fun onAuthSuccess(user: FirebaseUser) {
+    private fun onSignUpSuccess(user: FirebaseUser) {
         val username = usernameFromEmail(user.email!!)
 
         // Write new user
         writeNewUser(user.uid, username, user.email)
 
         // Go to MainActivity
+        goToMainActivity()
+    }
+
+    private fun goToMainActivity() {
         startActivity(Intent(this@SignInActivity, MainActivity::class.java))
         finish()
     }
@@ -129,12 +132,10 @@ class SignInActivity : BaseActivity(), View.OnClickListener {
         return result
     }
 
-    // [START basic_write]
     private fun writeNewUser(userId: String, name: String, email: String?) {
-        val user = User(name, email)
+        val user = User(name, email,"demo@demo")
         database.child("users").child(userId).setValue(user)
     }
-    // [END basic_write]
 
     override fun onClick(v: View) {
         val i = v.id
@@ -145,8 +146,5 @@ class SignInActivity : BaseActivity(), View.OnClickListener {
         }
     }
 
-    companion object {
 
-        private const val TAG = "SignInActivity"
-    }
 }

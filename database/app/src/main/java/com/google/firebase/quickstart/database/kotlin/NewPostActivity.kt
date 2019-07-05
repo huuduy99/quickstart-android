@@ -4,32 +4,26 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.quickstart.database.R
 import com.google.firebase.quickstart.database.kotlin.models.Post
 import com.google.firebase.quickstart.database.kotlin.models.User
-import kotlinx.android.synthetic.main.activity_new_post.fabSubmitPost
-import kotlinx.android.synthetic.main.activity_new_post.fieldBody
-import kotlinx.android.synthetic.main.activity_new_post.fieldTitle
-import java.util.HashMap
+import kotlinx.android.synthetic.main.activity_new_post.*
+import java.util.*
 
 class NewPostActivity : BaseActivity() {
+    companion object {
+        private const val TAG = "NewPostActivity"
+        private const val REQUIRED = "Required"
+    }
 
-    // [START declare_database_ref]
     private lateinit var database: DatabaseReference
-    // [END declare_database_ref]
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_post)
 
-        // [START initialize_database_ref]
         database = FirebaseDatabase.getInstance().reference
-        // [END initialize_database_ref]
 
         fabSubmitPost.setOnClickListener { submitPost() }
     }
@@ -38,13 +32,11 @@ class NewPostActivity : BaseActivity() {
         val title = fieldTitle.text.toString()
         val body = fieldBody.text.toString()
 
-        // Title is required
         if (TextUtils.isEmpty(title)) {
             fieldTitle.error = REQUIRED
             return
         }
 
-        // Body is required
         if (TextUtils.isEmpty(body)) {
             fieldBody.error = REQUIRED
             return
@@ -56,37 +48,34 @@ class NewPostActivity : BaseActivity() {
 
         // [START single_value_read]
         val userId = uid
-        database.child("users").child(userId).addListenerForSingleValueEvent(
-                object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        // Get user value
-                        val user = dataSnapshot.getValue(User::class.java)
+        database.child("users").child(userId).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Get user value
+                val user = dataSnapshot.getValue(User::class.java)
 
-                        // [START_EXCLUDE]
-                        if (user == null) {
-                            // User is null, error out
-                            Log.e(TAG, "User $userId is unexpectedly null")
-                            Toast.makeText(baseContext,
-                                    "Error: could not fetch user.",
-                                    Toast.LENGTH_SHORT).show()
-                        } else {
-                            // Write new post
-                            writeNewPost(userId, user.username.toString(), title, body)
-                        }
+                // [START_EXCLUDE]
+                if (user == null) {
+                    // User is null, error out
+                    Log.e(TAG, "User $userId is unexpectedly null")
+                    Toast.makeText(baseContext, "Error: could not fetch user.", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Write new post
+                    writeNewPost(userId, user.username.toString(), title, body)
+                }
 
-                        // Finish this Activity, back to the stream
-                        setEditingEnabled(true)
-                        finish()
-                        // [END_EXCLUDE]
-                    }
+                // Finish this Activity, back to the stream
+                setEditingEnabled(true)
+                finish()
+                // [END_EXCLUDE]
+            }
 
-                    override fun onCancelled(databaseError: DatabaseError) {
-                        Log.w(TAG, "getUser:onCancelled", databaseError.toException())
-                        // [START_EXCLUDE]
-                        setEditingEnabled(true)
-                        // [END_EXCLUDE]
-                    }
-                })
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(TAG, "getUser:onCancelled", databaseError.toException())
+                // [START_EXCLUDE]
+                setEditingEnabled(true)
+                // [END_EXCLUDE]
+            }
+        })
         // [END single_value_read]
     }
 
@@ -100,7 +89,6 @@ class NewPostActivity : BaseActivity() {
         }
     }
 
-    // [START write_fan_out]
     private fun writeNewPost(userId: String, username: String, title: String, body: String) {
         // Create new post at /user-posts/$userid/$postid and at
         // /posts/$postid simultaneously
@@ -119,11 +107,6 @@ class NewPostActivity : BaseActivity() {
 
         database.updateChildren(childUpdates)
     }
-    // [END write_fan_out]
 
-    companion object {
 
-        private const val TAG = "NewPostActivity"
-        private const val REQUIRED = "Required"
-    }
 }

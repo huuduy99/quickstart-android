@@ -9,25 +9,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.quickstart.database.R
 import com.google.firebase.quickstart.database.kotlin.models.Comment
 import com.google.firebase.quickstart.database.kotlin.models.Post
 import com.google.firebase.quickstart.database.kotlin.models.User
-import kotlinx.android.synthetic.main.activity_post_detail.buttonPostComment
-import kotlinx.android.synthetic.main.activity_post_detail.fieldCommentText
-import kotlinx.android.synthetic.main.activity_post_detail.recyclerPostComments
-import kotlinx.android.synthetic.main.include_post_author.postAuthor
-import kotlinx.android.synthetic.main.include_post_text.postBody
-import kotlinx.android.synthetic.main.include_post_text.postTitle
-import kotlinx.android.synthetic.main.item_comment.view.commentAuthor
-import kotlinx.android.synthetic.main.item_comment.view.commentBody
-import java.util.ArrayList
+import kotlinx.android.synthetic.main.activity_post_detail.*
+import kotlinx.android.synthetic.main.include_post_author.*
+import kotlinx.android.synthetic.main.include_post_text.*
+import kotlinx.android.synthetic.main.item_comment.view.*
+import java.util.*
 
 class PostDetailActivity : BaseActivity(), View.OnClickListener {
 
@@ -43,14 +34,11 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
         setContentView(R.layout.activity_post_detail)
 
         // Get post key from intent
-        postKey = intent.getStringExtra(EXTRA_POST_KEY)
-                ?: throw IllegalArgumentException("Must pass EXTRA_POST_KEY")
+        postKey = intent.getStringExtra(EXTRA_POST_KEY) ?: throw IllegalArgumentException("Must pass EXTRA_POST_KEY")
 
         // Initialize Database
-        postReference = FirebaseDatabase.getInstance().reference
-                .child("posts").child(postKey)
-        commentsReference = FirebaseDatabase.getInstance().reference
-                .child("post-comments").child(postKey)
+        postReference = FirebaseDatabase.getInstance().reference.child("posts").child(postKey)
+        commentsReference = FirebaseDatabase.getInstance().reference.child("post-comments").child(postKey)
 
         // Initialize Views
         buttonPostComment.setOnClickListener(this)
@@ -79,8 +67,7 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
                 // Getting Post failed, log a message
                 Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
                 // [START_EXCLUDE]
-                Toast.makeText(baseContext, "Failed to load post.",
-                        Toast.LENGTH_SHORT).show()
+                Toast.makeText(baseContext, "Failed to load post.", Toast.LENGTH_SHORT).show()
                 // [END_EXCLUDE]
             }
         }
@@ -116,31 +103,31 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
 
     private fun postComment() {
         val uid = uid
-        FirebaseDatabase.getInstance().reference.child("users").child(uid)
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        // Get user information
-                        val user = dataSnapshot.getValue(User::class.java)
-                        if (user == null) {
-                            return
-                        }
+        FirebaseDatabase.getInstance().reference.child("users").child(uid).addListenerForSingleValueEvent(object :
+                                                                                                                  ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Get user information
+                val user = dataSnapshot.getValue(User::class.java)
+                if (user == null) {
+                    return
+                }
 
-                        val authorName = user.username
+                val authorName = user.username
 
-                        // Create new comment object
-                        val commentText = fieldCommentText.text.toString()
-                        val comment = Comment(uid, authorName, commentText)
+                // Create new comment object
+                val commentText = fieldCommentText.text.toString()
+                val comment = Comment(uid, authorName, commentText)
 
-                        // Push the comment, it will appear in the list
-                        commentsReference.push().setValue(comment)
+                // Push the comment, it will appear in the list
+                commentsReference.push().setValue(comment)
 
-                        // Clear the field
-                        fieldCommentText.text = null
-                    }
+                // Clear the field
+                fieldCommentText.text = null
+            }
 
-                    override fun onCancelled(databaseError: DatabaseError) {
-                    }
-                })
+            override fun onCancelled(databaseError: DatabaseError) {
+            }
+        })
     }
 
     private class CommentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -151,10 +138,8 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
         }
     }
 
-    private class CommentAdapter(
-        private val context: Context,
-        private val databaseReference: DatabaseReference
-    ) : RecyclerView.Adapter<CommentViewHolder>() {
+    private class CommentAdapter(private val context: Context, private val databaseReference: DatabaseReference) :
+            RecyclerView.Adapter<CommentViewHolder>() {
 
         private val childEventListener: ChildEventListener?
 
@@ -237,8 +222,7 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
 
                 override fun onCancelled(databaseError: DatabaseError) {
                     Log.w(TAG, "postComments:onCancelled", databaseError.toException())
-                    Toast.makeText(context, "Failed to load comments.",
-                            Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Failed to load comments.", Toast.LENGTH_SHORT).show()
                 }
             }
             databaseReference.addChildEventListener(childEventListener)
@@ -268,7 +252,6 @@ class PostDetailActivity : BaseActivity(), View.OnClickListener {
     }
 
     companion object {
-
         private const val TAG = "PostDetailActivity"
         const val EXTRA_POST_KEY = "post_key"
     }

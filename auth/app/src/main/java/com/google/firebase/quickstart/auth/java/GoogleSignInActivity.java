@@ -49,7 +49,7 @@ public class GoogleSignInActivity extends BaseActivity implements
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
-    // [END declare_auth]
+    // [END declare_auth],
 
     private GoogleSignInClient mGoogleSignInClient;
     private TextView mStatusTextView;
@@ -121,6 +121,7 @@ public class GoogleSignInActivity extends BaseActivity implements
     // [START auth_with_google]
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getEmail());
         // [START_EXCLUDE silent]
         showProgressDialog();
         // [END_EXCLUDE]
